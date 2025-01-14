@@ -25,7 +25,10 @@ class GameEntity:
 
     @health.setter
     def health(self, value):
-        self.__health = value
+        if value < 0:
+            self.__health = 0
+        else:
+            self.__health = value
 
     @property
     def damage(self):
@@ -54,11 +57,12 @@ class Boss(GameEntity):
 
     def attack(self, heroes):
         for hero in heroes:
-            if type(hero) == Berserk:
-                hero.__blocked_damage = choice([5, 10])
-                hero.health -= (self.damage - hero.__blocked_damage)
-            else:
-                hero.health -= self.damage
+            if hero.health > 0:
+                if type(hero) == Berserk and self.defence != SuperAbility.BLOCK_AND_REVERT:
+                    hero.blocked_damage = choice([5, 10])
+                    hero.health -= (self.damage - hero.blocked_damage)
+                else:
+                    hero.health -= self.damage
 
     def __str__(self):
         return 'BOSS ' + super().__str__() + f' defence: {self.__defence}'
@@ -88,8 +92,9 @@ class Warrior(Hero):
         Hero.__init__(self, name, health, damage, SuperAbility.CRITICAL_DAMAGE)
 
     def apply_super_power(self, boss, heroes):
-        # TODO Here will be implementation of critical damage
-        pass
+        coef = randint(2, 5)  # 2,3,4
+        boss.health -= coef * self.damage
+        print(f'Warrior {self.name} hits boss critically: {coef * self.damage}')
 
 
 class Magic(Hero):
@@ -115,8 +120,8 @@ class Berserk(Hero):
         self.__blocked_damage = value
 
     def apply_super_power(self, boss, heroes):
-        # TODO Here will be implementation of reverting
-        pass
+        boss.health -= self.__blocked_damage
+        print(f'Berserk {self.name} reverted damage to boss: {self.__blocked_damage}')
 
 
 class Medic(Hero):
@@ -125,8 +130,9 @@ class Medic(Hero):
         self.__heal_points = heal_points
 
     def apply_super_power(self, boss, heroes):
-        # TODO Here will be implementation of healing
-        pass
+        for hero in heroes:
+            if hero.health > 0 and hero != self:
+                hero.health += self.__heal_points
 
 
 round_number = 0
@@ -145,8 +151,9 @@ def play_round(boss, heroes):
     boss.choose_defence(heroes)
     boss.attack(heroes)
     for hero in heroes:
-        hero.attack(boss)
-        hero.apply_super_power(boss, heroes)
+        if hero.health > 0 and boss.health > 0 and boss.defence != hero.ability:
+            hero.attack(boss)
+            hero.apply_super_power(boss, heroes)
     show_statistics(boss, heroes)
 
 
