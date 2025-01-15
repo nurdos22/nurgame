@@ -7,6 +7,9 @@ class SuperAbility(Enum):
     BOOST = 2
     CRITICAL_DAMAGE = 3
     BLOCK_AND_REVERT = 4
+    REVIVE = 5
+    STEAL_HEALTH = 6
+
 
 
 class GameEntity:
@@ -102,8 +105,11 @@ class Magic(Hero):
         Hero.__init__(self, name, health, damage, SuperAbility.BOOST)
 
     def apply_super_power(self, boss, heroes):
-        # TODO Here will be implementation of boosting
-        pass
+        boost_amount = 5
+        for hero in heroes:
+            if hero.health > 0 and hero != self:
+                hero.damage += boost_amount
+        print(f'Magic {self.name} boosted all heroes by {boost_amount}')
 
 
 class Berserk(Hero):
@@ -133,6 +139,46 @@ class Medic(Hero):
         for hero in heroes:
             if hero.health > 0 and hero != self:
                 hero.health += self.__heal_points
+
+
+
+#MY HOMEWORK CODE
+
+
+class Witcher(Hero):
+    def __init__(self, name, health, damage):
+        Hero.__init__(self, name, health, damage, SuperAbility.REVIVE)
+
+    def apply_super_power(self, boss, heroes):
+        for hero in heroes:
+            if hero.health <= 0 and hero != self:
+                hero.health = self.health
+                self.health = 0
+                print(f'Witcher {self.name} sacrificed himself to revive {hero.name}')
+                break
+
+
+
+class Hacker(Hero):
+    def __init__(self, name, health, damage):
+        Hero.__init__(self, name, health, damage, SuperAbility.STEAL_HEALTH)
+        self.round_counter = 0
+
+    def apply_super_power(self, boss, heroes):
+        self.round_counter += 1
+        if self.round_counter % 2 == 0:
+            stolen_health = 30
+            boss.health -= stolen_health
+            recipient = choice([hero for hero in heroes if hero.health > 0])
+            recipient.health += stolen_health
+            print(f'Hacker {self.name} stole {stolen_health} health from boss and gave it to {recipient.name}')
+
+
+
+
+
+
+
 
 
 round_number = 0
@@ -181,7 +227,9 @@ def start_game():
     berserk = Berserk('Berserkbek', 250, 5)
     doc = Medic('Watson', 200, 5, 15)
     assistant = Medic('Yunga', 300, 5, 5)
-    heroes_list = [warrior_1, assistant, warrior_2, magic, berserk, doc]
+    witcher = Witcher('Wedmabek', 300, 0)
+    hacker = Hacker('Mark Zukerberg', 220, 10)
+    heroes_list = [warrior_1, assistant, warrior_2, magic, berserk, doc, witcher, hacker]
 
     show_statistics(boss, heroes_list)
 
@@ -193,4 +241,6 @@ start_game()
 
 
 
-#my hw
+
+
+
